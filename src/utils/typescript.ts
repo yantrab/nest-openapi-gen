@@ -20,8 +20,8 @@ export function getMethodDetails(method: MethodDeclaration) {
   const path = (methodTypeDecorator.getArguments()[0] as StringLiteral)?.getLiteralValue() || "";
   const httpMethodType = methodTypeDecorator.getName().toLowerCase();
   const description = method?.getJsDocs()[0]?.getDescription();
-  let responseType = method?.getReturnType();
-  if (responseType?.getTypeArguments()[0]) responseType = responseType?.getTypeArguments()[0];
+  const responseType = method?.getReturnType();
+  // if (responseType?.getTypeArguments()[0]) responseType = responseType?.getTypeArguments()[0];
   const parameters = method.getParameters();
   return { path, httpMethodType, description, responseType, parameters };
 }

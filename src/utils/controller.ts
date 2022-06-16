@@ -9,5 +9,5 @@ export function getControllerTag(controller: ClassDeclaration) {
 }
 
 export function getControllerPath(controller: ClassDeclaration, prefix?: string) {
-  return (prefix || "/") + ((controller.getDecorator("Controller")?.getArguments()[0] as StringLiteral)?.getLiteralValue() || "");
+  return (prefix || "") + "/" + ((controller.getDecorator("Controller")?.getArguments()[0] as StringLiteral)?.getLiteralValue() || "");
 }

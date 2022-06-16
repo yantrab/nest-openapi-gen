@@ -7,7 +7,7 @@ export const definitions = {};
 
 export function getResponseObject(responseType?: Type): OpenAPIV3.ResponseObject {
   if (!responseType) return { description: "ok" };
-  if (responseType?.getTypeArguments()[0]) responseType = responseType?.getTypeArguments()[0];
+  if (responseType.getText().includes("Promise")) responseType = responseType?.getTypeArguments()[0];
 
   const responseObject = {};
   const contentType = getContentType(responseType);
