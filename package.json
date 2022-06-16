@@ -1,6 +1,6 @@
 {
   "name": "nest-openapi-gen",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Generate openapi documentation from nest controllers",
   "tags": [
     "openapi",
@@ -21,7 +21,7 @@
     "pretest": "npm run lint",
     "lint": "eslint 'src/**/*.ts' --fix",
     "copy-files": "cp package.json ./dist/package.json & cp README.md ./dist/README.md",
-    "publishh": "npm run test && npm run build && npm version patch && npm run copy-files && cd dist && npm publish && cd ../ && npm run clean"
+    "publishh": "npm run test && npm run build && npm version patch --force && npm run copy-files && cd dist && npm publish && cd ../ && npm run clean"
   },
   "author": "yantrab@gmail.com",
   "license": "MIT",
