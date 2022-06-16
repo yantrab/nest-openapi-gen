@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noImplicitAny": false,
+    "moduleResolution": "node",
+    "alwaysStrict": true,
+    "declaration": true,
+    "module": "commonjs",
+    "types": [
+      "node"
+    ],
+    "sourceMap": false,
+    "target": "es6",
+    "plugins": [
+    ]
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "src/server/tests/*"
+  ]
+}
