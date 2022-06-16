@@ -1,6 +1,6 @@
 {
   "name": "nest-openapi-gen",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Generate openapi documentation from nest controllers",
   "tags": [
     "openapi",
@@ -26,7 +26,6 @@
   "author": "yantrab@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "ibm-openapi-validator": "^0.81.0",
     "lodash": "^4.17.21",
     "openapi-schema-validator": "^12.0.0",
     "ts-morph": "^10.0.2"
