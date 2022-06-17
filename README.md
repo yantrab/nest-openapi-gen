@@ -10,14 +10,15 @@ You are already define your controllers with typescript, and you don't want to w
 This package can generate the openapi document without add any code or decorators.
 ## Usage
 
-####Install 
+#### Install 
 ```npm i -D nest-openapi-gen```
 
-####Generate
+#### Generate
 ```typescript
 import { generate } from 'nest-openapi-gen';
-generate({ prefix:'api' });
+generate({ prefix:'/api' });
 ```
+This will generate openapi.schema.json file in the root folder.
 
 ## TODO
 - Play with @nestjs/swagger to add custom schemas.
