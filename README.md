@@ -20,6 +20,51 @@ generate({ prefix:'/api' });
 ```
 This will generate openapi.schema.json file in the root folder.
 
+## Big advantage
+Now that we have openapi doc, we can use [express-openapi-validator](https://www.npmjs.com/package/express-openapi-validator) instead of class validator.
+This ugly code:
+```typescript
+export class GetEventsTimelineParams {
+  // eslint-disable-next-line no-restricted-syntax
+  @IsString() projectName!: string;
+  // eslint-disable-next-line no-restricted-syntax
+  @IsNumber() storeId!: number;
+}
+
+export class GetEventsTimelineQuery {
+  // eslint-disable-next-line no-restricted-syntax
+  @IsString() uuid!: string;
+  // eslint-disable-next-line no-restricted-syntax
+  @IsNumber() startTime!: number;
+  @IsNumber() @IsOptional() endTime?: number;
+}
+@Controller(':projectName/event-timeline')
+export class EventTimelineController {
+  @Get(":storeId")
+  getEventTimeline(@Param() params: GetEventsTimelineParams, 
+                   @Query() query: GetEventsTimelineQuery): Promise<ActivityTimeline[]> {
+  }
+}
+```
+
+Became to : 
+```typescript
+export interface GetEventsTimelineQuery {
+  uuid: string;
+  startTime: number;
+  endTime?: number;
+}
+
+@Controller(':projectName/event-timeline')
+export class EventTimelineController {
+  @Get(":storeId")
+  getEventTimeline(@Param('projectName') projectName: string,
+                   @Param('storeId') storeId: number,
+                   @Query() query: GetEventsTimelineQuery): Promise<ActivityTimeline[]> {
+  }
+}
+```
+
 ## TODO
 - Play with @nestjs/swagger to add custom schemas.
 - Multiple responses
