@@ -21,6 +21,16 @@ interface SomeOtherInterface extends SomeInterface {}
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @Get("response-promise")
+  getHello3(): Promise<string[]> {
+    return;
+  }
+
+  @Get("response-array-of-string")
+  getHello2() {
+    return ["a"];
+  }
+
   @Get("response-string")
   getHello(): string {
     return this.appService.getHello();

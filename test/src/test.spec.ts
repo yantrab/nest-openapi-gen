@@ -6,6 +6,9 @@ const openapiDoc: OpenAPIV3.Document = JSON.parse(readFileSync("./openapi.schema
 
 describe("openapi", () => {
   generate();
+  it("should convert path", () => {
+    expect(openapiDoc.paths["/{projectName}/event-timeline/{storeId}"]);
+  });
 
   it("should return valid open api document", () => {
     const validator = new OpenAPISchemaValidator({ version: 3 });
@@ -116,6 +119,60 @@ describe("openapi", () => {
           "application/json": {
             schema: {
               $ref: "#/components/schemas/SomeInterface",
+            },
+          },
+        },
+        description: "ok",
+      });
+      expect(openapiDoc.components.schemas.SomeInterface).toEqual({
+        properties: {
+          a: {
+            type: "number",
+          },
+          b: {
+            type: "string",
+          },
+        },
+        required: ["a"],
+        type: "object",
+      });
+    });
+    it("response array of string", () => {
+      expect(openapiDoc.paths["/response-array-of-string"]?.get.responses[200]).toEqual({
+        content: {
+          "application/json": {
+            schema: {
+              items: {
+                type: "string",
+              },
+              type: "array",
+            },
+          },
+        },
+        description: "ok",
+      });
+      expect(openapiDoc.components.schemas.SomeInterface).toEqual({
+        properties: {
+          a: {
+            type: "number",
+          },
+          b: {
+            type: "string",
+          },
+        },
+        required: ["a"],
+        type: "object",
+      });
+    });
+    it("response promise", () => {
+      expect(openapiDoc.paths["/response-promise"]?.get.responses[200]).toEqual({
+        content: {
+          "application/json": {
+            schema: {
+              items: {
+                type: "string",
+              },
+              type: "array",
             },
           },
         },
