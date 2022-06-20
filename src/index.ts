@@ -21,7 +21,7 @@ function setMethodSchema(
   schema.paths[path]![httpMethodType] = {
     tags: [tag.name],
     responses: { 200: getResponseObject(responseType) },
-    ...methodParameterSchemas,
+    ...cloneDeep(methodParameterSchemas),
   };
 }
 
@@ -51,8 +51,19 @@ export function generate(options?: { prefix?: string; filePath?: string }) {
       else {
         methodParameterSchemas.parameters = methodParameterSchemas.parameters.filter((p) => p.in !== "path" || p.required);
         optionalParams.forEach((optionalParam) => {
-          const partialPath = path.split("{" + optionalParam.name)[0];
-          setMethodSchema(schema, partialPath, methodDetails.httpMethodType, methodDetails.responseType, tag, methodParameterSchemas);
+          const partialPath = path.split("/{" + optionalParam.name)[0];
+          if (!schema.paths[partialPath])
+            setMethodSchema(schema, partialPath, methodDetails.httpMethodType, methodDetails.responseType, tag, methodParameterSchemas);
+          optionalParam.required = true;
+          methodParameterSchemas.parameters.push(optionalParam);
+          setMethodSchema(
+            schema,
+            partialPath + "/{" + optionalParam.name + "}",
+            methodDetails.httpMethodType,
+            methodDetails.responseType,
+            tag,
+            methodParameterSchemas
+          );
         });
       }
     });

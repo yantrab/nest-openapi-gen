@@ -72,7 +72,6 @@ export class EventTimelineController {
 ## TODO
 - Play with @nestjs/swagger to add custom schemas.
 - Multiple responses
-- Optional path params
 - Explicit method parameter validations
 - Explicit class properties validations
 - support files in response and request body

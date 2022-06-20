@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, Param } from "@nestjs/common";
 import { AppService } from "./app.service";
 class SomeClass {
   a: number;
@@ -82,4 +82,7 @@ export class AppController {
 
   @Post("query-object-path")
   queryObjectPath(@Query("a") a: string, @Query("b") b?: number) {}
+
+  @Get(":p/optional-params/:id?/:timestamp?")
+  optionalPathParams(@Param("p") p: string, @Param("id") id?: number, @Param("timestamp") timestamp?: number) {}
 }
