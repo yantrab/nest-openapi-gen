@@ -20,6 +20,10 @@ generate({ prefix:'/api' });
 ```
 This will generate openapi.schema.json file in the root folder.
 
+#### Options
+- prefix - global prefix
+- filePath - The path to the generated file
+
 ## Big advantage
 Now that we have openapi doc, we can use [express-openapi-validator](https://www.npmjs.com/package/express-openapi-validator) instead of class validator.
 This ugly code:
