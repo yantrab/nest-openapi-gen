@@ -8,7 +8,7 @@ import { definitions, getMethodParameters, getResponseObject } from "./utils/ope
 import { omitDeepBy } from "./utils/omit-by";
 import { cloneDeep } from "lodash";
 
-export function generate(options?: { prefix?: string }) {
+export function generate(options?: { prefix?: string; filePath?: string }) {
   const schema: OpenAPIV3.Document = {
     openapi: "3.0.0",
     info: getPackageInfo(),
@@ -37,5 +37,5 @@ export function generate(options?: { prefix?: string }) {
   const swaggerSchema = omitDeepBy(cloneDeep(schema), (x: any, y: any) => {
     return y === "optional";
   });
-  writeFileSync("./openapi.schema.json", JSON.stringify(swaggerSchema));
+  writeFileSync(options?.filePath || "./openapi.schema.json", JSON.stringify(swaggerSchema));
 }
