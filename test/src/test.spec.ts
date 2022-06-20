@@ -364,4 +364,11 @@ describe("openapi", () => {
       ]);
     });
   });
+
+  describe("path params", () => {
+    // path = ":p/optional-params/:id?/:timestamp?"
+    expect(openapiDoc.paths["/{p}/optional-params"]).toBeTruthy();
+    expect(openapiDoc.paths["/{p}/optional-params/{id}"]).toBeTruthy();
+    expect(openapiDoc.paths["/{p}/optional-params/{id}/{timestamp}"]).toBeTruthy();
+  });
 });

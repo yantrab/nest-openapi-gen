@@ -6,7 +6,24 @@ import { getControllerPath, getControllerTag } from "./utils/controller";
 import { getOpenapiPath } from "./utils/util";
 import { definitions, getMethodParameters, getResponseObject } from "./utils/openapi";
 import { omitDeepBy } from "./utils/omit-by";
-import { cloneDeep } from "lodash";
+import { cloneDeep, findIndex, orderBy } from "lodash";
+import { ParameterDeclaration, Type } from "ts-morph";
+
+function setMethodSchema(
+  schema: OpenAPIV3.Document,
+  path: string,
+  httpMethodType: string,
+  responseType: Type,
+  tag,
+  methodParameterSchemas
+) {
+  schema.paths[path] = schema.paths[path] || {};
+  schema.paths[path]![httpMethodType] = {
+    tags: [tag.name],
+    responses: { 200: getResponseObject(responseType) },
+    ...cloneDeep(methodParameterSchemas),
+  };
+}
 
 export function generate(options?: { prefix?: string; filePath?: string }) {
   const schema: OpenAPIV3.Document = {
@@ -25,12 +42,30 @@ export function generate(options?: { prefix?: string; filePath?: string }) {
       if (!methodDetails) return;
       const methodParameterSchemas = getMethodParameters(methodDetails.parameters);
       const path = getOpenapiPath(basePath, methodDetails.path);
-      schema.paths[path] = schema.paths[path] || {};
-      schema.paths[path]![methodDetails.httpMethodType] = {
-        tags: [tag.name],
-        responses: { 200: getResponseObject(methodDetails.responseType) },
-        ...methodParameterSchemas,
-      };
+      const optionalParams: OpenAPIV3.ParameterObject[] = orderBy(
+        methodParameterSchemas.parameters.filter((p) => p.in === "path" && !p.required),
+        (p) => findIndex(path, p.name)
+      );
+      if (!optionalParams.length)
+        setMethodSchema(schema, path, methodDetails.httpMethodType, methodDetails.responseType, tag, methodParameterSchemas);
+      else {
+        methodParameterSchemas.parameters = methodParameterSchemas.parameters.filter((p) => p.in !== "path" || p.required);
+        optionalParams.forEach((optionalParam) => {
+          const partialPath = path.split("/{" + optionalParam.name)[0];
+          if (!schema.paths[partialPath])
+            setMethodSchema(schema, partialPath, methodDetails.httpMethodType, methodDetails.responseType, tag, methodParameterSchemas);
+          optionalParam.required = true;
+          methodParameterSchemas.parameters.push(optionalParam);
+          setMethodSchema(
+            schema,
+            partialPath + "/{" + optionalParam.name + "}",
+            methodDetails.httpMethodType,
+            methodDetails.responseType,
+            tag,
+            methodParameterSchemas
+          );
+        });
+      }
     });
   });
   schema.components!["schemas"] = definitions;

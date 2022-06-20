@@ -16,7 +16,10 @@ export function getResponseObject(responseType?: Type): OpenAPIV3.ResponseObject
 }
 
 export function getMethodParameters(parameters: ParameterDeclaration[]) {
-  const result: any = { requestBody: undefined, parameters: [] };
+  const result: { requestBody?: OpenAPIV3.RequestBodyObject; parameters: OpenAPIV3.ParameterObject[] } = {
+    requestBody: undefined,
+    parameters: [],
+  };
   parameters.forEach((parameter) => {
     parameter.getDecorators().forEach((decorator) => {
       const decoratorName = decorator.getName();
@@ -30,9 +33,9 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
           if (inputPath) {
             result.requestBody = result.requestBody || { content: { "application/json": { schema: { type: "object" } } } };
             const propSchema = getParamSchema(parameterType);
-            const schema = result.requestBody.content["application/json"].schema;
+            const schema = result.requestBody.content["application/json"].schema as OpenAPIV3.SchemaObject;
             schema.properties = schema.properties || {};
-            schema.properties[inputPath] = propSchema;
+            if (propSchema) schema.properties[inputPath] = propSchema as OpenAPIV3.SchemaObject;
             if ((propSchema as any).optional !== true && !isOptional) schema.required = (schema.required || []).concat(inputPath);
           } else {
             result.requestBody = { content: {} };
@@ -42,10 +45,11 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
         }
         case "Param": {
           if (inputPath) {
+            const paramSchema = getParamSchema(parameterType) as OpenAPIV3.SchemaObject & { optional?: boolean };
             result.parameters.push({
               in: "path",
               name: inputPath,
-              required: true,
+              required: !((paramSchema as any).optional || isOptional),
               schema: getParamSchema(parameter.getType()),
             } as OpenAPIV3.ParameterObject);
           } else {
@@ -55,7 +59,7 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
               result.parameters.push({
                 in: "path",
                 name: prop,
-                required: true,
+                required: !(propSchema as any).optional,
                 schema: propSchema,
               } as OpenAPIV3.ParameterObject);
             });
@@ -113,6 +117,8 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
   });
   return result;
 }
+
+function fixOptionalParams() {}
 
 export function getContentType(type: Type) {
   if (isPrimitive(type)) return "text/plain";
