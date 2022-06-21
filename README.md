@@ -70,10 +70,12 @@ export class EventTimelineController {
 ```
 
 ## TODO
+- ci
+- cli command
 - Play with @nestjs/swagger to add custom schemas.
 - Multiple responses
-- Explicit method parameter validations
-- Explicit class properties validations
+- Explicit method parameter validations (min, max...)
+- Explicit class properties validations(min, max...)
 - support files in response and request body
 
 ## Dependencies
