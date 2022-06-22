@@ -17,7 +17,7 @@
     "clean": "rm -rf dist/ && rm -rf coverage/",
     "build": "tsc  --p  tsconfig.build.json\n",
     "prebuild": "npm run clean",
-    "test": "cd ./test $ npm test",
+    "test": "cd ./test && npm run test",
     "start": "ts-node ./src/server/tests/app.ts",
     "pretest": "npm run lint",
     "lint": "eslint 'src/**/*.ts' --fix",
