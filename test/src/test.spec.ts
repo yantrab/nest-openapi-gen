@@ -2,10 +2,10 @@ import { generate } from "../../src";
 import { OpenAPIV3 } from "openapi-types";
 import { readFileSync } from "fs";
 import OpenAPISchemaValidator from "openapi-schema-validator";
+generate();
 const openapiDoc: OpenAPIV3.Document = JSON.parse(readFileSync("./openapi.schema.json", { encoding: "utf8" }));
 
 describe("openapi", () => {
-  generate();
   it("should convert path", () => {
     expect(openapiDoc.paths["/{projectName}/event-timeline/{storeId}"]);
   });
@@ -363,5 +363,12 @@ describe("openapi", () => {
         },
       ]);
     });
+  });
+
+  describe("path params", () => {
+    // path = ":p/optional-params/:id?/:timestamp?"
+    expect(openapiDoc.paths["/{p}/optional-params"]).toBeTruthy();
+    expect(openapiDoc.paths["/{p}/optional-params/{id}"]).toBeTruthy();
+    expect(openapiDoc.paths["/{p}/optional-params/{id}/{timestamp}"]).toBeTruthy();
   });
 });
