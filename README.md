@@ -3,14 +3,14 @@ Generate openapi document from nest controller
 
 ## Problem 😕
 
-You are already define your controllers with typescript, and you don't want to write it again in the openapi document, or add @ApiProperty() decorator anywhere
+You already defined your controllers with typescript, and you don't want to write it again in the open API document, or add @ApiProperty() decorator anywhere
 
 ## Solution 😄
 
-This package can generate the openapi document without add any code or decorators.
+This package can generate the openapi document without adding any code or decorators.
 ## Usage
 
-#### Install 
+#### Install
 ```npm i -D nest-openapi-gen```
 
 #### Generate
@@ -23,9 +23,10 @@ This will generate openapi.schema.json file in the root folder.
 #### Options
 - prefix - global prefix
 - filePath - The path to the generated file
+- tsConfigFilePath - tsconfig.json file path. default - [root].tsconfig.json
 
 ## Big advantage
-Now that we have openapi doc, we can use [express-openapi-validator](https://www.npmjs.com/package/express-openapi-validator) instead of class validator.
+Now that we have openapi doc, we can use [express-openapi-validator](https://www.npmjs.com/package/express-openapi-validator) instead of class-validator.
 This ugly code:
 ```typescript
 export class GetEventsTimelineParams {
@@ -45,13 +46,13 @@ export class GetEventsTimelineQuery {
 @Controller(':projectName/event-timeline')
 export class EventTimelineController {
   @Get(":storeId")
-  getEventTimeline(@Param() params: GetEventsTimelineParams, 
+  getEventTimeline(@Param() params: GetEventsTimelineParams,
                    @Query() query: GetEventsTimelineQuery): Promise<ActivityTimeline[]> {
   }
 }
 ```
 
-Became to : 
+Became to :
 ```typescript
 export interface GetEventsTimelineQuery {
   uuid: string;
