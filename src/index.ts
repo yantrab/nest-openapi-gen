@@ -25,7 +25,7 @@ function setMethodSchema(
   };
 }
 
-export function generate(options?: { prefix?: string; filePath?: string }) {
+export function generate(options?: { prefix?: string; filePath?: string, tsConfigFilePath?: string }) {
   const schema: OpenAPIV3.Document = {
     openapi: "3.0.0",
     info: getPackageInfo(),
@@ -33,7 +33,7 @@ export function generate(options?: { prefix?: string; filePath?: string }) {
     components: {},
     tags: [],
   };
-  getControllers().forEach((controller) => {
+  getControllers(options?.tsConfigFilePath).forEach((controller) => {
     const tag = getControllerTag(controller);
     schema.tags?.push(tag);
     const basePath = getControllerPath(controller, options?.prefix);
