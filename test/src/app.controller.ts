@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Post, Query, Param } from "@nestjs/common";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import { AppService } from "./app.service";
 class SomeClass {
   a: number;
@@ -23,7 +25,7 @@ export class AppController {
 
   @Get("response-promise")
   getHello3(): Promise<string[]> {
-    return;
+    return new Promise<string[]>((resolve) => resolve["a"]);
   }
 
   @Get("response-array-of-string")

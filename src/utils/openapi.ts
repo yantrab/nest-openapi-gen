@@ -1,4 +1,13 @@
-import { EnumMember, ParameterDeclaration, StringLiteral, Symbol as tsSymbol, SymbolFlags, Type } from "ts-morph";
+import {
+  ClassDeclaration,
+  EnumMember,
+  ParameterDeclaration,
+  PropertyDeclaration,
+  StringLiteral,
+  Symbol as tsSymbol,
+  SymbolFlags,
+  Type,
+} from "ts-morph";
 import { isPrimitive } from "./typescript";
 import { OpenAPIV3 } from "openapi-types";
 import { last } from "lodash";
@@ -25,31 +34,29 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
       const decoratorName = decorator.getName();
       const decoratorArgs = decorator.getArguments();
       const inputPath = (decoratorArgs[0] as StringLiteral)?.getLiteralValue();
-      const parameterType = parameter.getType();
-      const isOptional = parameter.hasQuestionToken();
       switch (decoratorName) {
         case "Body": {
-          const contentType = getContentType(parameterType);
+          const contentType = getContentType(parameter.getType());
           if (inputPath) {
             result.requestBody = result.requestBody || { content: { "application/json": { schema: { type: "object" } } } };
-            const propSchema = getParamSchema(parameterType);
+            const propSchema = getParamSchema(parameter);
             const schema = result.requestBody.content["application/json"].schema as OpenAPIV3.SchemaObject;
             schema.properties = schema.properties || {};
             if (propSchema) schema.properties[inputPath] = propSchema as OpenAPIV3.SchemaObject;
-            if ((propSchema as any).optional !== true && !isOptional) schema.required = (schema.required || []).concat(inputPath);
+            if (!(propSchema as any)?.optional) schema.required = (schema.required || []).concat(inputPath);
           } else {
             result.requestBody = { content: {} };
-            result.requestBody.content[contentType] = { schema: getParamSchema(parameterType) };
+            result.requestBody.content[contentType] = { schema: getParamSchema(parameter) };
           }
           break;
         }
         case "Param": {
           if (inputPath) {
-            const paramSchema = getParamSchema(parameterType) as OpenAPIV3.SchemaObject & { optional?: boolean };
+            const paramSchema = getParamSchema(parameter) as OpenAPIV3.SchemaObject & { optional?: boolean };
             result.parameters.push({
               in: "path",
               name: inputPath,
-              required: !((paramSchema as any).optional || isOptional),
+              required: !(paramSchema as any).optional,
               schema: getParamSchema(parameter.getType()),
             } as OpenAPIV3.ParameterObject);
           } else {
@@ -68,15 +75,15 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
         }
         case "Query": {
           if (inputPath) {
-            const paramSchema = getParamSchema(parameterType) as OpenAPIV3.SchemaObject & { optional?: boolean };
+            const paramSchema = getParamSchema(parameter) as OpenAPIV3.SchemaObject & { optional?: boolean };
             result.parameters.push({
               in: "query",
               name: inputPath,
-              required: !((paramSchema as any).optional || isOptional),
+              required: !(paramSchema as any).optional,
               schema: paramSchema,
             } as OpenAPIV3.ParameterObject);
           } else {
-            const paramSchema = getObjectSchema(parameterType) as OpenAPIV3.SchemaObject & { optional?: boolean };
+            const paramSchema = getObjectSchema(parameter.getType()) as OpenAPIV3.SchemaObject & { optional?: boolean };
             Object.keys(paramSchema.properties || {}).forEach((prop) => {
               const propSchema = paramSchema.properties?.[prop];
               result.parameters.push({
@@ -91,15 +98,15 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
         }
         case "Headers": {
           if (inputPath) {
-            const paramSchema = getParamSchema(parameterType) as OpenAPIV3.SchemaObject & { optional?: boolean };
+            const paramSchema = getParamSchema(parameter) as OpenAPIV3.SchemaObject & { optional?: boolean };
             result.parameters.push({
               in: "header",
               name: inputPath,
-              required: !((paramSchema as any).optional || isOptional),
+              required: !(paramSchema as any).optional,
               schema: paramSchema,
             } as OpenAPIV3.ParameterObject);
           } else {
-            const paramSchema = getObjectSchema(parameterType) as OpenAPIV3.SchemaObject & { optional?: boolean };
+            const paramSchema = getObjectSchema(parameter.getType()) as OpenAPIV3.SchemaObject & { optional?: boolean };
             Object.keys(paramSchema.properties || {}).forEach((prop) => {
               const propSchema = paramSchema.properties?.[prop];
               result.parameters.push({
@@ -118,8 +125,6 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
   return result;
 }
 
-function fixOptionalParams() {}
-
 export function getContentType(type: Type) {
   if (isPrimitive(type)) return "text/plain";
   return "application/json";
@@ -131,52 +136,50 @@ const getObjectSchema = (type: Type): OpenAPIV3.NonArraySchemaObject & { optiona
   const optional = nonNullableTypeText !== type.getText();
 
   const schema: OpenAPIV3.NonArraySchemaObject & { optional?: boolean } = { type: "object", properties: {}, required: [], optional };
-  type
-    .getNonNullableType()
-    .getProperties()
-    .forEach((prop) => {
-      const isGetter = prop.hasFlags(SymbolFlags.GetAccessor);
-      if (isGetter) return;
-      const valueDeclaration = prop.getValueDeclarationOrThrow();
-      const schemaProperties = schema.properties!;
-      const key = prop.getName();
-
-      schemaProperties[key] = getParamSchema(valueDeclaration.getType(), prop) || {};
-      if (!schemaProperties[key]) {
-        schemaProperties[key] = { type: "object" };
-      }
-      if ((schemaProperties[key] as any).optional !== true) {
-        schema.required!.push(key);
-      }
-    });
+  nonNullableType.getProperties().forEach((prop) => {
+    const isGetter = prop.hasFlags(SymbolFlags.GetAccessor);
+    if (isGetter) return;
+    const valueDeclaration = prop.getValueDeclarationOrThrow() as PropertyDeclaration;
+    const schemaProperties = schema.properties!;
+    const key = prop.getName();
+    schemaProperties[key] = getParamSchema(valueDeclaration) || {};
+    if (!schemaProperties[key]) {
+      schemaProperties[key] = { type: "object" };
+    }
+    if (!(schemaProperties[key] as any).optional) {
+      schema.required!.push(key);
+    }
+  });
+  if (!schema.required?.length) delete schema.required;
   return schema;
 };
 
 const getParamSchema = (
-  type: Type,
-  prop?: tsSymbol
+  typeOrProperty: Type | PropertyDeclaration | ParameterDeclaration
 ): OpenAPIV3.ReferenceObject | (OpenAPIV3.SchemaObject & { optional?: boolean }) | undefined => {
+  const type = typeOrProperty instanceof Type ? typeOrProperty : typeOrProperty.getType();
+  const prop = typeOrProperty instanceof Type ? undefined : typeOrProperty;
   const typeText = type.getText();
   const nonNullableType = type.getNonNullableType();
-  const optional = nonNullableType.getText() !== typeText || !!prop?.hasFlags(SymbolFlags.Optional);
+  const schema = { optional: nonNullableType.getText() !== typeText || !!prop?.hasQuestionToken() };
   if (nonNullableType.isArray()) {
     return {
-      optional,
+      ...schema,
       type: "array",
-      items: getParamSchema(nonNullableType.getArrayElementTypeOrThrow(), prop) || {},
+      items: getParamSchema(nonNullableType.getArrayElementTypeOrThrow()) || {},
     };
   }
 
   if (nonNullableType.getText() === "Date") {
-    return { type: "string", format: "date-time", optional };
+    return { ...schema, type: "string", format: "date-time" };
   }
 
   if (isPrimitive(nonNullableType)) {
     const type = typeText.replace(" | undefined", "");
-    return { type, optional } as OpenAPIV3.SchemaObject;
+    return { type, ...schema } as OpenAPIV3.SchemaObject;
   }
-
   if (nonNullableType.isClass() || nonNullableType.isInterface()) {
+    nonNullableType.getProperties();
     const name = nonNullableType.getText().split(").")[1] || nonNullableType.getText();
     if (!definitions[name]) definitions[name] = getObjectSchema(type);
     return { $ref: "#/components/schemas/" + name } as OpenAPIV3.ReferenceObject;
@@ -199,7 +202,7 @@ const getParamSchema = (
     enumSchema["x-enumNames"] = enumMembers.map((m: EnumMember) => m.getValue());
     enumSchema.type = typeof enumSchema.enum[0];
     definitions[name] = enumSchema;
-    return { $ref: "#/components/schemas/" + name, optional } as OpenAPIV3.ReferenceObject;
+    return { $ref: "#/components/schemas/" + name, ...schema } as OpenAPIV3.ReferenceObject;
   }
 
   if (nonNullableType.isEnum()) {
@@ -209,13 +212,13 @@ const getParamSchema = (
     enumSchema["x-enumNames"] = nonNullableType.getUnionTypes().map((t) => last(t.getText().split(".")) as string);
     enumSchema.type = typeof enumSchema.enum[0];
     definitions[name] = enumSchema;
-    return { $ref: "#/components/schemas/" + name, optional } as OpenAPIV3.ReferenceObject;
+    return { $ref: "#/components/schemas/" + name, ...schema } as OpenAPIV3.ReferenceObject;
   }
 
   const unionTypes = type.getUnionTypes().filter((t) => !t.isUndefined());
   if (unionTypes.length > 1) {
     const schema: any = {};
-    schema.oneOf = unionTypes.map((t) => getParamSchema(t, prop));
+    schema.oneOf = unionTypes.map(getParamSchema);
     if (!schema.oneOf[0]) {
       delete schema.oneOf;
       schema.enum = unionTypes.map((t) => t.getText().slice(1, -1));
