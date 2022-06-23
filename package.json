@@ -23,7 +23,7 @@
     "install": "cd ./test && npm i",
     "lint": "eslint 'src/**/*.ts' --fix",
     "copy-files": "cp package.json ./dist/package.json & cp README.md ./dist/README.md",
-    "publishh": "npm run test && npm run build && npm version patch --force && npm run copy-files && cd dist && npm publish && cd ../ && npm run clean"
+    "publishh": "npm run build && npm version patch --force && npm run copy-files && cd dist && npm publish && cd ../ && npm run clean"
   },
   "author": "yantrab@gmail.com",
   "license": "MIT",

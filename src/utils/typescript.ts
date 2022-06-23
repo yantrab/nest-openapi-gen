@@ -1,8 +1,8 @@
 import { ClassDeclaration, MethodDeclaration, Project, StringLiteral, Type } from "ts-morph";
 export const isPrimitive = (type: Type) => type.isBoolean() || type.isNumber() || type.isString();
 
-export function getControllers() {
-  const project = new Project({ tsConfigFilePath: process.cwd() + "/tsconfig.json" });
+export function getControllers(tsConfigFilePath = process.cwd() + "/tsconfig.json") {
+  const project = new Project({ tsConfigFilePath });
   const sourceFiles = project.getSourceFiles();
   const controllers: ClassDeclaration[] = [];
   sourceFiles.forEach((s) => {
