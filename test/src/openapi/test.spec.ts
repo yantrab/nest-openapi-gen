@@ -1,4 +1,4 @@
-import { generate } from "../../src";
+import { generate } from "../../../src";
 import { OpenAPIV3 } from "openapi-types";
 import { readFileSync } from "fs";
 import OpenAPISchemaValidator from "openapi-schema-validator";

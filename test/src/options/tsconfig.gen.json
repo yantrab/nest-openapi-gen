@@ -16,7 +16,11 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+
   },
-  "files": ["./app2.controller.ts"]
+  "files": [
+    "../openapi/app2.controller.ts"
+  ]
 }
