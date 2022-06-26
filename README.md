@@ -128,8 +128,7 @@ export class EventTimelineController {
 
 ## TODO
 - ci/cd
-- cli command
-- Play with @nestjs/swagger to add custom schemas.
+- cli commands
 - Multiple responses
 - support files in response and request body
 
