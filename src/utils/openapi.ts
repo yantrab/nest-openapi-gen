@@ -3,6 +3,7 @@ import {
   EnumMember,
   ParameterDeclaration,
   PropertyDeclaration,
+  PropertySignature,
   StringLiteral,
   Symbol as tsSymbol,
   SymbolFlags,
@@ -11,6 +12,7 @@ import {
 import { isPrimitive } from "./typescript";
 import { OpenAPIV3 } from "openapi-types";
 import { last } from "lodash";
+import { getCustomValidation } from "./decorators";
 
 export const definitions = {};
 
@@ -57,7 +59,7 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
               in: "path",
               name: inputPath,
               required: !(paramSchema as any).optional,
-              schema: getParamSchema(parameter.getType()),
+              schema: paramSchema,
             } as OpenAPIV3.ParameterObject);
           } else {
             const objectSchema = getObjectSchema(parameter.getType());
@@ -130,89 +132,101 @@ export function getContentType(type: Type) {
   return "application/json";
 }
 
-const getObjectSchema = (type: Type): OpenAPIV3.NonArraySchemaObject & { optional?: boolean } => {
+const getObjectSchema = (
+  type: Type,
+  schema?: OpenAPIV3.NonArraySchemaObject & { optional?: boolean }
+): OpenAPIV3.NonArraySchemaObject & { optional?: boolean } => {
   const nonNullableType = type.getNonNullableType();
   const nonNullableTypeText = nonNullableType.getText();
   const optional = nonNullableTypeText !== type.getText();
 
-  const schema: OpenAPIV3.NonArraySchemaObject & { optional?: boolean } = { type: "object", properties: {}, required: [], optional };
+  schema = schema || { type: "object", properties: {}, required: [], optional };
   nonNullableType.getProperties().forEach((prop) => {
     const isGetter = prop.hasFlags(SymbolFlags.GetAccessor);
     if (isGetter) return;
     const valueDeclaration = prop.getValueDeclarationOrThrow() as PropertyDeclaration;
-    const schemaProperties = schema.properties!;
+    const schemaProperties = schema!.properties!;
     const key = prop.getName();
     schemaProperties[key] = getParamSchema(valueDeclaration) || {};
     if (!schemaProperties[key]) {
       schemaProperties[key] = { type: "object" };
     }
     if (!(schemaProperties[key] as any).optional) {
-      schema.required!.push(key);
+      schema?.required!.push(key);
     }
   });
   if (!schema.required?.length) delete schema.required;
   return schema;
 };
+const getTypeString = (type: Type) => {
+  const typeText = type.getText();
+  if (type.isArray()) return "array";
+  if (type.getText() === "Date") return "date";
+  if (isPrimitive(type)) return typeText.replace(" | undefined", "");
+  if (type.isClass() || type.isInterface()) return "ref";
+  if (type.isObject()) return "object";
+  if (type.isEnumLiteral()) return "enumLiteral";
+  if (type.isEnum()) return "enum";
+};
 
 const getParamSchema = (
-  typeOrProperty: Type | PropertyDeclaration | ParameterDeclaration
+  typeOrProperty: Type | PropertyDeclaration | ParameterDeclaration | PropertySignature
 ): OpenAPIV3.ReferenceObject | (OpenAPIV3.SchemaObject & { optional?: boolean }) | undefined => {
   const type = typeOrProperty instanceof Type ? typeOrProperty : typeOrProperty.getType();
   const prop = typeOrProperty instanceof Type ? undefined : typeOrProperty;
   const typeText = type.getText();
   const nonNullableType = type.getNonNullableType();
-  const schema = { optional: nonNullableType.getText() !== typeText || !!prop?.hasQuestionToken() };
-  if (nonNullableType.isArray()) {
-    return {
-      ...schema,
-      type: "array",
-      items: getParamSchema(nonNullableType.getArrayElementTypeOrThrow()) || {},
-    };
+  const typeString = getTypeString(nonNullableType);
+  let schema = { optional: nonNullableType.getText() !== typeText || !!prop?.hasQuestionToken() };
+  if (prop instanceof PropertyDeclaration || prop instanceof ParameterDeclaration) {
+    prop.getDecorators().forEach((decorator) => {
+      schema = { ...getCustomValidation(decorator, typeString), ...schema };
+    });
   }
 
-  if (nonNullableType.getText() === "Date") {
-    return { ...schema, type: "string", format: "date-time" };
-  }
-
-  if (isPrimitive(nonNullableType)) {
-    const type = typeText.replace(" | undefined", "");
-    return { type, ...schema } as OpenAPIV3.SchemaObject;
-  }
-  if (nonNullableType.isClass() || nonNullableType.isInterface()) {
-    nonNullableType.getProperties();
-    const name = nonNullableType.getText().split(").")[1] || nonNullableType.getText();
-    if (!definitions[name]) definitions[name] = getObjectSchema(type);
-    return { $ref: "#/components/schemas/" + name } as OpenAPIV3.ReferenceObject;
-  }
-
-  if (nonNullableType.isObject()) {
-    return getObjectSchema(type);
-  }
-
-  // enum --------------------------------------
-  if (nonNullableType.isEnumLiteral() && prop) {
-    const name = prop.getName();
-    const enumMembers = (prop as any)
-      .getValueDeclarationOrThrow()
-      .getSourceFile()
-      .getEnum((e: { getName: () => string }) => e.getName() === nonNullableType.getText())
-      .getMembers();
-    const enumSchema: any = {};
-    enumSchema.enum = enumMembers.map((m: EnumMember) => m.getName());
-    enumSchema["x-enumNames"] = enumMembers.map((m: EnumMember) => m.getValue());
-    enumSchema.type = typeof enumSchema.enum[0];
-    definitions[name] = enumSchema;
-    return { $ref: "#/components/schemas/" + name, ...schema } as OpenAPIV3.ReferenceObject;
-  }
-
-  if (nonNullableType.isEnum()) {
-    const name = last(nonNullableType.getText().split("."))!;
-    const enumSchema: any = {};
-    enumSchema.enum = nonNullableType.getUnionTypes().map((t) => t.getLiteralValueOrThrow());
-    enumSchema["x-enumNames"] = nonNullableType.getUnionTypes().map((t) => last(t.getText().split(".")) as string);
-    enumSchema.type = typeof enumSchema.enum[0];
-    definitions[name] = enumSchema;
-    return { $ref: "#/components/schemas/" + name, ...schema } as OpenAPIV3.ReferenceObject;
+  switch (typeString) {
+    case "array":
+      return {
+        ...schema,
+        type: "array",
+        items: getParamSchema(nonNullableType.getArrayElementTypeOrThrow()) || {},
+      };
+    case "date":
+      return { ...schema, type: "string", format: "date-time" };
+    case "boolean":
+    case "number":
+    case "string":
+      return { type: typeString, ...schema };
+    case "ref": {
+      const name = nonNullableType.getText().split(").")[1] || nonNullableType.getText();
+      if (!definitions[name]) definitions[name] = getObjectSchema(type);
+      return { $ref: "#/components/schemas/" + name } as OpenAPIV3.ReferenceObject;
+    }
+    case "object":
+      return getObjectSchema(type, { type: "object", properties: {}, required: [], ...schema });
+    case "enumLiteral": {
+      const name = prop!.getName();
+      const enumMembers = (prop as any)
+        .getValueDeclarationOrThrow()
+        .getSourceFile()
+        .getEnum((e: { getName: () => string }) => e.getName() === nonNullableType.getText())
+        .getMembers();
+      const enumSchema: any = {};
+      enumSchema.enum = enumMembers.map((m: EnumMember) => m.getName());
+      enumSchema["x-enumNames"] = enumMembers.map((m: EnumMember) => m.getValue());
+      enumSchema.type = typeof enumSchema.enum[0];
+      definitions[name] = enumSchema;
+      return { $ref: "#/components/schemas/" + name, ...schema };
+    }
+    case "enum": {
+      const name = last(nonNullableType.getText().split("."))!;
+      const enumSchema: any = {};
+      enumSchema.enum = nonNullableType.getUnionTypes().map((t) => t.getLiteralValueOrThrow());
+      enumSchema["x-enumNames"] = nonNullableType.getUnionTypes().map((t) => last(t.getText().split(".")) as string);
+      enumSchema.type = typeof enumSchema.enum[0];
+      definitions[name] = enumSchema;
+      return { $ref: "#/components/schemas/" + name, ...schema };
+    }
   }
 
   const unionTypes = type.getUnionTypes().filter((t) => !t.isUndefined());

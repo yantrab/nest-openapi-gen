@@ -1,7 +1,4 @@
 import { Body, Controller, Get, Post, Query, Param } from "@nestjs/common";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { AppService } from "./app.service";
 class SomeClass {
   a: number;
   b?: string;
@@ -21,8 +18,6 @@ interface SomeOtherInterface extends SomeInterface {}
  */
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
   @Get("response-promise")
   getHello3(): Promise<string[]> {
     return new Promise<string[]>((resolve) => resolve["a"]);
@@ -35,7 +30,7 @@ export class AppController {
 
   @Get("response-string")
   getHello(): string {
-    return this.appService.getHello();
+    return "";
   }
 
   @Get("response-object1")

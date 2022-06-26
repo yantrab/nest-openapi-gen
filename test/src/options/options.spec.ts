@@ -10,7 +10,7 @@ describe("options", () => {
   });
 
   it("tsConfigFilePath option", () => {
-    generate({ tsConfigFilePath: resolve(__dirname, "../src/tsconfig.json"), filePath: "a.json" });
+    generate({ tsConfigFilePath: resolve(__dirname, "./tsconfig.gen.json"), filePath: "a.json" });
     const openapiDoc: OpenAPIV3.Document = JSON.parse(readFileSync("./a.json", { encoding: "utf8" }));
     expect(Object.keys(openapiDoc.paths).length).toBe(1);
   });
