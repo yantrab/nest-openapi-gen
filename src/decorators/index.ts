@@ -17,4 +17,5 @@ export {
   RelativeJsonPointer,
   Pattern,
   NumberString,
-} from "./ajv.decorators";
+  Schema,
+} from "./decorators";

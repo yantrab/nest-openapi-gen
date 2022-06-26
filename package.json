@@ -1,6 +1,6 @@
 {
   "name": "nest-openapi-gen",
-  "version": "1.0.16",
+  "version": "1.0.20",
   "description": "Generate openapi documentation from nest controllers",
   "keywords": [
     "openapi",

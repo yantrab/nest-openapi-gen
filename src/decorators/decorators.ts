@@ -1,8 +1,14 @@
+import { OpenAPIV3 } from "openapi-types";
+
 interface IMinMaxKeyword {
   (count: number): any;
 }
 interface IPatternKeyword {
   (pattern: RegExp | string): any;
+}
+
+interface ISchemaKeyword {
+  (schema: OpenAPIV3.SchemaObject): any;
 }
 
 export const Min: IMinMaxKeyword = (count) => () => {};
@@ -24,3 +30,4 @@ export const Uuid: PropertyDecorator & ParameterDecorator = (count) => () => {};
 export const JsonPointer: PropertyDecorator & ParameterDecorator = (count) => () => {};
 export const RelativeJsonPointer: PropertyDecorator & ParameterDecorator = (count) => () => {};
 export const NumberString: PropertyDecorator & ParameterDecorator = (count) => () => {};
+export const Schema: ISchemaKeyword = (count) => () => {};

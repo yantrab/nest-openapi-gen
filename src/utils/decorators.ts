@@ -37,6 +37,8 @@ export function getCustomValidation(decorator: Decorator, type?: string) {
     case "min":
     case "max":
       return getMinMaxValidation(decoratorName, type, decoratorParams[0].getText());
+    case "schema":
+      return JSON.parse(decoratorParams[0].getText().replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": '));
   }
   return {};
 }

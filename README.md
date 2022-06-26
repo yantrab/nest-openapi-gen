@@ -25,6 +25,8 @@ This will generate openapi.schema.json file in the root folder.
 - filePath - The path to the generated file
 - tsConfigFilePath - tsconfig.json file path. default - [root].tsconfig.json
 
+### Decorators
+
 #### Validation decorators
 - Min
 - Max
@@ -68,6 +70,16 @@ export class App3Controller {
   @Post("minmax/:mail")
   minmax(@Param("mail") @Min(5) @Email mail: string, @Query() query: MinMaxClass, @Body() body: MinMaxClass) {}
 }
+```
+
+#### Schema decorator
+you can set openapi schema by using Schema decorator.
+```typescript
+  @Post("schema/:mail")
+  schema(
+    @Param("mail") @Schema({ description: "User email" }) @Email mail: string,
+    @Query() @Schema({ properties: { someInt: { type: "integer" } } }) query: SomeInterfaceWithInt
+  ) {}
 ```
 ## Big advantage
 Now that we have openapi doc, we can use [express-openapi-validator](https://www.npmjs.com/package/express-openapi-validator) instead of class-validator.
@@ -116,8 +128,7 @@ export class EventTimelineController {
 
 ## TODO
 - ci/cd
-- cli command
-- Play with @nestjs/swagger to add custom schemas.
+- cli commands
 - Multiple responses
 - support files in response and request body
 
