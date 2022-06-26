@@ -1,5 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
-import { AppService } from "./app.service";
+import { Controller, Get, Param } from "@nestjs/common";
 
 @Controller(":projectName/event-timeline")
 export class App2Controller {

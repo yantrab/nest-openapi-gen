@@ -1,6 +1,6 @@
 {
   "name": "nest-openapi-gen",
-  "version": "1.0.9",
+  "version": "1.0.16",
   "description": "Generate openapi documentation from nest controllers",
   "keywords": [
     "openapi",
@@ -20,7 +20,7 @@
     "test": "cd ./test && npm run test",
     "start": "ts-node ./src/server/tests/app.ts",
     "pretest": "npm run lint",
-    "install": "cd ./test && npm i",
+    "install-test": "cd ./test && npm i",
     "lint": "eslint 'src/**/*.ts' --fix",
     "copy-files": "cp package.json ./dist/package.json & cp README.md ./dist/README.md",
     "publishh": "npm run build && npm version patch --force && npm run copy-files && cd dist && npm publish && cd ../ && npm run clean"

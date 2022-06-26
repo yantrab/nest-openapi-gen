@@ -1,4 +1,4 @@
-import { generate } from "../../src";
+import { generate } from "../../../src";
 import { OpenAPIV3 } from "openapi-types";
 import { readFileSync } from "fs";
 import OpenAPISchemaValidator from "openapi-schema-validator";
@@ -26,7 +26,7 @@ describe("openapi", () => {
     });
 
     it("should take tag info from controller jsdoc", () => {
-      expect(openapiDoc.tags[0]).toEqual({
+      expect(openapiDoc.tags.find((t) => t.name === "App")).toEqual({
         description: "Controller description\nthis is second line",
         name: "App",
       });
