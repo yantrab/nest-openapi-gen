@@ -128,4 +128,48 @@ describe("decorators", () => {
       type: "object",
     });
   });
+
+  it("schema", () => {
+    const openapiDoc: OpenAPIV3.Document = JSON.parse(readFileSync("decorators.json", { encoding: "utf8" }));
+    expect(openapiDoc.paths["/schema/{mail}"].post.parameters).toEqual([
+      {
+        in: "path",
+        name: "mail",
+        required: true,
+        schema: {
+          description: "User email",
+          format: "email",
+          type: "string",
+        },
+      },
+      {
+        in: "query",
+        name: "someInt",
+        required: true,
+        schema: {
+          type: "integer",
+        },
+      },
+      {
+        in: "query",
+        name: "id",
+        required: true,
+        schema: {
+          type: "string",
+        },
+      },
+    ]);
+    expect(openapiDoc.components.schemas["SomeInterfaceWithInt"]).toEqual({
+      properties: {
+        id: {
+          type: "string",
+        },
+        someInt: {
+          type: "integer",
+        },
+      },
+      required: ["someInt", "id"],
+      type: "object",
+    });
+  });
 });
